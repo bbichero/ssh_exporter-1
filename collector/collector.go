@@ -138,6 +138,16 @@ func (c *Collector) collect() Metric {
 		HostKeyAlgorithms: c.target.HostKeyAlgorithms,
 		Timeout:           time.Duration(c.target.Timeout) * time.Second,
 	}
+	// add support for legacy sshd server (works with openssh 5.5p1)
+	sshConfig.SetDefaults()
+	sshConfig.KeyExchanges = append(
+		sshConfig.KeyExchanges,
+		"diffie-hellman-group-exchange-sha256",
+		"diffie-hellman-group-exchange-sha1",
+		"diffie-hellman-group1-sha1",
+	)
+	sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes256-cbc", "3des-cbc")
+
 	connection, err := ssh.Dial("tcp", c.target.Host, sshConfig)
 	if err != nil {
 		if strings.Contains(err.Error(), "timeout") {
